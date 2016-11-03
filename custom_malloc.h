@@ -42,7 +42,14 @@ void align_block (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque
 }
 
 void merge_blocks () { /* Recorre la lista colapsando bloques libres contiguos */
-  BLOCK *first = mem_start;
+  BLOCK *block = mem_start;
+  while (block) {
+    if ((block->next)->free) {
+      block->size += (block->next)->size + HEAD_SIZE;
+      block->next = (block->next)->next;
+    }
+    else block = block->next;
+  }
 }
 
 #ifdef FIRST_FIT /* Algoritmo de primer ajuste */
