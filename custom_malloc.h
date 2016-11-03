@@ -90,7 +90,24 @@ void * realloc(void * ptr, size_t size) {
   set_initial_memory(); /* NO QUITAR. */
   printf("Calling realloc with ptr= 0x%X and size = %lld\n", ptr, size);
   
-  return NULL;
+  if (!size) {
+    free(ptr);
+    return NULL;
+  }
+  
+  if (!ptr) { /* Puntero nulo */
+    if (size > 0) return malloc(size); /* Malloc con tamaño mayor que cero */
+    return NULL; /* Nulo con tamaño menor o igual que cero */
+  }
+  
+  BLOCK *block = ptr;
+  if (block->size == size) return ptr; /* Si el tamaño solicitado es el mismo no hay cambios */
+  if (block->size > size) align_block(size); /* Si el tamaño solicitado es menor se reduce el bloque */
+  else {
+    /* Busco bloque adyacente libre, si no es lo suficientemente grande busco uno nuevo */
+  }
+  
+  return block;
 }
 
 /**
@@ -108,6 +125,13 @@ void free(void *ptr) {
   block->free = 1;
   merge_blocks(); /* Se colapsan bloques libres adyacentes */
 }
+
+void align_block (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque al solicitado */
+}
+
+void mergr_blocks () { /* Recorre la lista colapsando bloques libres contiguos */
+}
+
 
 #ifdef FIRST_FIT /* Algoritmo de primer ajuste */
 BLOCK *get_block(size_t size) {
