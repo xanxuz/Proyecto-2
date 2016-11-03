@@ -6,6 +6,7 @@
 #include <stdlib.h> /* Imports the malloc family of functions. */
 #include <signal.h> /* Imports kill. */
 #include <unistd.h> /* Imports getpid. */
+#include <string.h> /* Imports memset. */
 
 /* Undefine the malloc family so that we can then reimplement it. */
 #undef malloc
@@ -23,11 +24,25 @@ BLOCK { /* Información de cada bloque de memoria */
 };
 #define HEAD_SIZE (sizeof(BLOCK)) /* Tamaño que ocupa la información de cada bloque */
 
+static void * mem_start = NULL;
+static void * mem_end = NULL;
+static BLOCK * ind = NULL; /* Bloque de memoria índice */
 
 void align_block (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque al solicitado */
+  if (block->size + HEAD_SIZE > size) {
+    BLOCK *next = block->next; /* Guardo el puntero al bloque adyacente */
+    BLOCK *rest = (void *)(block + 1) + block->size; /* Ubicación del bloque nuevo */
+    block->next = rest; /* El bloque a modificar apunta al bloque nuevo */
+    rest->next = next; /* El bloque nuevo apunta al que estaba adyacente */
+    rest->free = 1; /* Se marca libre */
+    rest->size = block->size - HEAD_SIZE - size ; /* Tamaño del bloque nuevo */
+    block->size = size; /* Tamaño del bloque actualizado */ 
+  }
+  else kill(getpid(), SIGSEGV); /* Error, incongruencia de tamaños */
 }
 
 void merge_blocks () { /* Recorre la lista colapsando bloques libres contiguos */
+  BLOCK *first = mem_start;
 }
 
 #ifdef FIRST_FIT /* Algoritmo de primer ajuste */
@@ -51,13 +66,8 @@ BLOCK *get_block (size_t size) {
 }
 
 #else
-#error "Error: No se definió un algoritmo de ajuste"
+#error no se definió un algoritmo de ajuste
 #endif
-
-
-static void * mem_start = NULL;
-static void * mem_end = NULL;
-static BLOCK * index = NULL; /* Primer bloque de memoria */
 
 static void set_initial_memory() {
   if(mem_start == NULL && mem_end == NULL) {
@@ -65,10 +75,10 @@ static void set_initial_memory() {
     sbrk(MEM_SIZE);     /* Esto mueve el borde del segmento de datos en MEM_SIZE bytes. */
     mem_end = sbrk(0);
     
-    index = mem_start; /* Se registra el bloque de memoria inicial */
-    index->free = 1;
-    index->size = MEM_SIZE - HEAD_SIZE; /* Es el tamaño de la memoria menos el espacio que ocupa la información */
-    index->next = NULL;
+    ind = mem_start; /* Se registra el bloque de memoria inicial */
+    ind->free = 1;
+    ind->size = MEM_SIZE; /* Es el tamaño de la memoria menos el espacio que ocupa la información */
+    ind->next = NULL;
     
     printf("\n********************************************************************************\n");
     printf("CUSTOM MALLOC FAMILY INITIALIZATION\n");
