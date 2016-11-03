@@ -27,6 +27,7 @@ BLOCK { /* Información de cada bloque de memoria */
 static void * mem_start = NULL;
 static void * mem_end = NULL;
 static BLOCK * first = NULL; /* Bloque de memoria índice */
+static BLOCK * ind = NULL;
 
 void align_block (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque al solicitado */
   if (block->size + HEAD_SIZE > size) {
@@ -95,12 +96,10 @@ BLOCK *get_block (size_t size) {
 }
 
 #elif defined(NEXT_FIT) /* Algoritmo de siguiente ajuste */
-static BLOCK *ind = first;
-
 BLOCK *get_block (size_t size) {
   BLOCK *start = ind;
   while (ind->next != start) {
-    if (ind->free) return block
+    if (ind->free) return ind;
     ind = ind->next;
     
     if (!ind) ind = first;
