@@ -14,19 +14,20 @@
 #undef free
 
 #define MEM_SIZE 314572800 /* 300 MB. */
+#define BLOCK struct BLOCK /* Estructura de bloque */
 
-typedef struct { /* Información de cada bloque de memoria */
+BLOCK { /* Información de cada bloque de memoria */
 	char free;
 	size_t size;
-	block *next;
-} block;
+	BLOCK *next;
+};
 
-#define HEAD_SIZE (sizeof(block)) /* Tamaño que ocupa la información de cada bloque */
+#define HEAD_SIZE (sizeof(BLOCK)) /* Tamaño que ocupa la información de cada bloque */
 
 
 static void * mem_start = NULL;
 static void * mem_end = NULL;
-static block * index = NULL; /* Primer bloque de memoria */
+static BLOCK * index = NULL; /* Primer bloque de memoria */
 
 static void set_initial_memory() {
   if(mem_start == NULL && mem_end == NULL) {
@@ -49,7 +50,7 @@ static void set_initial_memory() {
 }
 
 /**
- * Print the contents of the free blocks list.
+ * Print the contents of the free BLOCKs list.
  */
 void print_free_list() {
 
@@ -63,9 +64,10 @@ void * malloc(size_t size) {
   printf("Calling malloc with size = %lld\n", size);
   
   if (!size) return NULL; /* Caso borde, no se retorna ningún bloque */
-  block *target = free_block(size); /* Se busca un bloque que se pueda usar */
-  if (!target) return NULL; /* Si no se consigue, no se retorna ningún bloque */
-  return target + 1; /* Se retorna la dirección que sigue a la información del bloque */
+  BLOCK *block = get_block(size); /* Se busca un bloque que se pueda usar según un algoritmo */
+  if (!block) return NULL; /* Si no se consigue, no se retorna ningún bloque */
+  align_block(ptr, size); /* Ajusta el tamaño del bloque al solicitado */
+  return block + 1; /* Se retorna la dirección que sigue a la información del bloque */
 }
 
 /**
@@ -75,7 +77,7 @@ void * calloc(size_t nmemb, size_t size) {
   set_initial_memory(); /* NO QUITAR. */
   printf("Calling calloc with nmemb = %lld and size = %lld\n", nmemb, size);
   
-  size_t size += nmemb; /* Tamaño necesario */
+  size += nmemb; /* Tamaño necesario */
   void *ptr = malloc(size); /* Dirección del bloque a usar */
   memset(ptr, 0, size); /* Se asigna cero en el espacio necesario */
   return ptr; /* Retorno la dirección del bloque que se usará */
@@ -97,24 +99,34 @@ void * realloc(void * ptr, size_t size) {
 void free(void *ptr) {
   set_initial_memory(); /* NO QUITAR. */
   printf("Calling free with ptr = 0x%X\n", ptr);
+  BLOCK *block = ptr;
   
-  /* Valdiar puntero */
+  if (!block) return; /* Caso borde, puntero nulo no hace nada */
+  if (block->free || ptr < mem_start || ptr >= mem_end) kill(getpid(), SIGSEGV); /* Error, puntero inválido */
   
-  if (!ptr) return;
-  
-  block *target = (block *) ptr - 1;
+  BLOCK *block = (BLOCK *) ptr - 1;
+  block->free = 1;
+  merge_blocks(); /* Se colapsan bloques libres adyacentes */
 }
 
 #ifdef FIRST_FIT /* Algoritmo de primer ajuste */
+BLOCK *get_block(size_t size) {
+}
 
 #elif defined(BEST_FIT) /* Algoritmo de mejor ajuste */
+BLOCK *get_block(size_t size) {
+}
 
 #elif defined(WORST_FIT) /* Algoritmo de peor ajuste */
+BLOCK *get_block(size_t size) {
+}
 
 #elif defined(NEXT_FIT) /* Algoritmo de siguiente ajuste */
+BLOCK *get_block(size_t size) {
+}
 
 #else
-	#error "Error: No se definió un algoritmo de ajuste"
+#error "Error: No se definió un algoritmo de ajuste"
 #endif
 
 #endif
