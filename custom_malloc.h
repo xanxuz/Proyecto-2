@@ -26,7 +26,7 @@ BLOCK { /* Información de cada bloque de memoria */
 
 static void * mem_start = NULL;
 static void * mem_end = NULL;
-static BLOCK * ind = NULL; /* Bloque de memoria índice */
+static BLOCK * first = NULL; /* Bloque de memoria índice */
 
 void align_block (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque al solicitado */
   if (block->size + HEAD_SIZE > size) {
@@ -54,21 +54,57 @@ void merge_blocks () { /* Recorre la lista colapsando bloques libres contiguos *
 
 #ifdef FIRST_FIT /* Algoritmo de primer ajuste */
 BLOCK *get_block (size_t size) {
+  BLOCK *block = mem_start;
+  while (block) {
+    if (block->free) return block
+    block = block->next;
+  }
   return NULL;
 }
 
 #elif defined(BEST_FIT) /* Algoritmo de mejor ajuste */
 BLOCK *get_block (size_t size) {
-  return NULL;
+  BLOCK *ptr = NULL;
+  BLOCK *block = mem_start;
+  size_t ref = MEM_SIZE - HEAD_SIZE;
+  
+  while (block) {
+    if (block->free && block->size >= size && block->size < ref) {
+    	ref = block->size;
+    	ptr = block;
+    }
+    block = block->next;
+  }
+  return ptr;
 }
 
 #elif defined(WORST_FIT) /* Algoritmo de peor ajuste */
 BLOCK *get_block (size_t size) {
-  return NULL;
+  BLOCK *ptr = NULL;
+  BLOCK *block = mem_start;
+  size_t ref = 0;
+  
+  while (block) {
+    if (block->free && block->size > ref) {
+    	ref = block->size;
+    	ptr = block;
+    }
+    block = block->next;
+  }
+  return ptr;
 }
 
 #elif defined(NEXT_FIT) /* Algoritmo de siguiente ajuste */
+static BLOCK *ind = first;
+
 BLOCK *get_block (size_t size) {
+  BLOCK *start = ind;
+  while (ind->next != start) {
+    if (ind->free) return block
+    ind = ind->next;
+    
+    if (!ind) ind = first;
+  }
   return NULL;
 }
 
@@ -82,10 +118,10 @@ static void set_initial_memory() {
     sbrk(MEM_SIZE);     /* Esto mueve el borde del segmento de datos en MEM_SIZE bytes. */
     mem_end = sbrk(0);
     
-    ind = mem_start; /* Se registra el bloque de memoria inicial */
-    ind->free = 1;
-    ind->size = MEM_SIZE; /* Es el tamaño de la memoria menos el espacio que ocupa la información */
-    ind->next = NULL;
+    first = mem_start; /* Se registra el bloque de memoria inicial */
+    first->free = 1;
+    first->size = MEM_SIZE; /* Es el tamaño de la memoria menos el espacio que ocupa la información */
+    first->next = NULL;
     
     printf("\n********************************************************************************\n");
     printf("CUSTOM MALLOC FAMILY INITIALIZATION\n");
