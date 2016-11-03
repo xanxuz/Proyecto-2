@@ -21,8 +21,38 @@ BLOCK { /* Información de cada bloque de memoria */
 	size_t size;
 	BLOCK *next;
 };
-
 #define HEAD_SIZE (sizeof(BLOCK)) /* Tamaño que ocupa la información de cada bloque */
+
+
+void align_block (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque al solicitado */
+}
+
+void merge_blocks () { /* Recorre la lista colapsando bloques libres contiguos */
+}
+
+#ifdef FIRST_FIT /* Algoritmo de primer ajuste */
+BLOCK *get_block (size_t size) {
+  return NULL;
+}
+
+#elif defined(BEST_FIT) /* Algoritmo de mejor ajuste */
+BLOCK *get_block (size_t size) {
+  return NULL;
+}
+
+#elif defined(WORST_FIT) /* Algoritmo de peor ajuste */
+BLOCK *get_block (size_t size) {
+  return NULL;
+}
+
+#elif defined(NEXT_FIT) /* Algoritmo de siguiente ajuste */
+BLOCK *get_block (size_t size) {
+  return NULL;
+}
+
+#else
+#error "Error: No se definió un algoritmo de ajuste"
+#endif
 
 
 static void * mem_start = NULL;
@@ -66,7 +96,7 @@ void * malloc(size_t size) {
   if (!size) return NULL; /* Caso borde, no se retorna ningún bloque */
   BLOCK *block = get_block(size); /* Se busca un bloque que se pueda usar según un algoritmo */
   if (!block) return NULL; /* Si no se consigue, no se retorna ningún bloque */
-  align_block(ptr, size); /* Ajusta el tamaño del bloque al solicitado */
+  align_block(block, size); /* Ajusta el tamaño del bloque al solicitado */
   return block + 1; /* Se retorna la dirección que sigue a la información del bloque */
 }
 
@@ -102,7 +132,7 @@ void * realloc(void * ptr, size_t size) {
   
   BLOCK *block = ptr;
   if (block->size == size) return ptr; /* Si el tamaño solicitado es el mismo no hay cambios */
-  if (block->size > size) align_block(size); /* Si el tamaño solicitado es menor se reduce el bloque */
+  if (block->size > size) align_block(block, size); /* Si el tamaño solicitado es menor se reduce el bloque */
   else {
     /* Busco bloque adyacente libre, si no es lo suficientemente grande busco uno nuevo */
   }
@@ -116,41 +146,14 @@ void * realloc(void * ptr, size_t size) {
 void free(void *ptr) {
   set_initial_memory(); /* NO QUITAR. */
   printf("Calling free with ptr = 0x%X\n", ptr);
-  BLOCK *block = ptr;
   
-  if (!block) return; /* Caso borde, puntero nulo no hace nada */
-  if (block->free || ptr < mem_start || ptr >= mem_end) kill(getpid(), SIGSEGV); /* Error, puntero inválido */
+  if (!ptr) return; /* Caso borde, puntero nulo no hace nada */
+  if (ptr < mem_start || ptr >= mem_end) kill(getpid(), SIGSEGV); /* Error, puntero inválido */
   
   BLOCK *block = (BLOCK *) ptr - 1;
-  block->free = 1;
+  if (block->free) kill(getpid(), SIGSEGV); /* Error, bloque libre */
+  block->free = 1; /* Se libera el bloque */
   merge_blocks(); /* Se colapsan bloques libres adyacentes */
 }
-
-void align_block (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque al solicitado */
-}
-
-void mergr_blocks () { /* Recorre la lista colapsando bloques libres contiguos */
-}
-
-
-#ifdef FIRST_FIT /* Algoritmo de primer ajuste */
-BLOCK *get_block(size_t size) {
-}
-
-#elif defined(BEST_FIT) /* Algoritmo de mejor ajuste */
-BLOCK *get_block(size_t size) {
-}
-
-#elif defined(WORST_FIT) /* Algoritmo de peor ajuste */
-BLOCK *get_block(size_t size) {
-}
-
-#elif defined(NEXT_FIT) /* Algoritmo de siguiente ajuste */
-BLOCK *get_block(size_t size) {
-}
-
-#else
-#error "Error: No se definió un algoritmo de ajuste"
-#endif
 
 #endif
