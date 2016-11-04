@@ -1,4 +1,4 @@
-#include "../include/fit.h"
+#include <fit.h>
 
 
 /**
@@ -21,18 +21,18 @@ BLOCK * get_free_block (size_t size) {
  */
 #elif defined(NEXT_FIT)
 BLOCK * get_free_block (size_t size) {
-	BLOCK * block = last;
+	BLOCK * block = LAST;
 	
 	do {
 		if (FREE) {
-			last = block;
+			LAST = block;
 			return block;
 		}
 		
 		block = NEXT;
 		
 		if (!block) block = FIRST;
-	} while (block != last);
+	} while (block != LAST);
 	
 	return NULL;
 }
