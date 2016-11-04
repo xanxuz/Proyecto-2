@@ -1,7 +1,7 @@
 #ifndef FIT_H
 #define FIT_H
 
-#include "../include/list.h"
+#include <list.h>
 
 
 /**
