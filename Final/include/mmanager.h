@@ -5,8 +5,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
-#include "../include/list.h"
-#include "../include/fit.h"
+#include <list.h>
+#include <fit.h>
 
 
 /**
