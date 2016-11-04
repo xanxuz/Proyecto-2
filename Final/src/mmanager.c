@@ -1,4 +1,4 @@
-#include "../include/mmanager.h"
+#include <mmanager.h>
 
 
 static void set_initial_memory () {
@@ -7,7 +7,7 @@ static void set_initial_memory () {
 		sbrk(MEM_SIZE);     /* Esto mueve el borde del segmento de datos en MEM_SIZE bytes. */
 		mem_end = sbrk(0);
 		
-		set_first_block(mem_start);
+		set_first_block(mem_start, MEM_SIZE - HEAD_SIZE);
 		
 		printf("\n********************************************************************************\n");
 		printf("CUSTOM MALLOC FAMILY INITIALIZATION\n");
@@ -16,6 +16,11 @@ static void set_initial_memory () {
 		printf("\tData segment size  = %ld bytes\n", mem_end - mem_start);
 		printf("********************************************************************************\n\n");
 	}
+}
+
+void print_free_list () {
+	printf("TODO: Print contet of free blocks\n");
+	return;
 }
 
 void * malloc (size_t size) {
@@ -85,7 +90,7 @@ void free(void *ptr) {
 	if (!ptr) return; 
 	if (ptr < mem_start || ptr >= mem_end) KILL;
 	
-	BLOCK *block = (BLOCK *)(ptr - 1);
+	BLOCK *block = (BLOCK *)(ptr) - 1;
 	if (FREE) KILL;
 	FREE = 1;
 	merge();
