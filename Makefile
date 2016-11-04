@@ -1,12 +1,10 @@
 ##
-# Solo debe estar descomentada UNA de las siguientes lineas FIT al compilar.
+# Solo debe estar descomentada UNA de las siguientes lineas CFLAGS al compilar.
 ##
-#FIT = -DFIRST_FIT
-#FIT = -DBEST_FIT 
-#FIT = -DWORST_FIT
-FIT = -DNEXT_FIT
-
-CFLAGS = $(FIT) -w
+CFLAGS = -DFIRST_FIT
+#CFLAGS = -DBEST_FIT
+#CFLAGS = -DWORST_FIT
+#CFLAGS = -DNEXT_FIT
 
 .PHONY: all
 all: proy2
