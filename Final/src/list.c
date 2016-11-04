@@ -1,4 +1,7 @@
-#include "../include/list.h"
+#include <list.h>
+
+BLOCK * FIRST = NULL;
+BLOCK * LAST = NULL;
 
 
 /**
@@ -6,8 +9,11 @@
 /* va a usar el siguiente ajuste se inicializa también el puntero al
 /* último bloque usado
  */
-void set_first_block (void * ptr) {
+void set_first_block (void * ptr, size_t size) {
 	FIRST = ptr;
+	FIRST->free = 1;
+	FIRST->size = size;
+	FIRST->next = NULL;
 	
 	#ifdef NEXT_FIT
 	last = FIRST;
@@ -24,13 +30,14 @@ void trunk (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque al so
 		if (SIZE - size <= HEAD_SIZE) return;
 		
 		BLOCK * next = NEXT;
-		BLOCK * rest = (block + 1) + size;
 		
-		NEXT = rest;
-		rest->next = NEXT;
+		NEXT = (void *)((char *)block + HEAD_SIZE + size);
+		(NEXT)->size = SIZE - size - HEAD_SIZE;
+		(NEXT)->next = next;
+		(NEXT)->free = 1;
 		
-		rest->size = SIZE - size - HEAD_SIZE;
 		SIZE = size;
+		FREE = 0;
 	}
 }
 
@@ -41,7 +48,7 @@ void trunk (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque al so
 void merge () {
 	BLOCK *block = FIRST;
 	
-	while (block) {
+	while (NEXT) {
 		if ((NEXT)->free) {
 			SIZE += (NEXT)->size + HEAD_SIZE;
 			NEXT = (NEXT)->next;
