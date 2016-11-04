@@ -18,19 +18,23 @@ DFIT=-DNEXT_FIT
 #DFIT=-DBEST_FIT 
 #DFIT=-DWORST_FIT
 
-# Banderas
-AR=ar src
-CFLAGS=-O3 $(DFIT)
-INCLUDE=-L$(LIB) mmanager.a
-
-# Reglas y objetivos
+# Objetivos
 FIT=$(OBJ)fit.o
 LIST=$(OBJ)list.o
 MMANAGER=$(OBJ)mmanager.o
-MLIB=$(LIB)mmanager.a
+MLIB=$(LIB)libmmanager.a
 MAIN=main
 
+# Banderas
+AR=ar src
+FLAGS=-O3 $(DFIT)
+INCLUDE=-I$(INCL)
+LINK=-L$(LIB) -lmmanager
+
+# cc -O3 -DNEXT_FIT -L./lib/ -lmmanager -I./include/ -o ./bin/main ./src/main.c
+
 # Objetivo del Makefile
+# Crea el ejecutable
 .PHONY: all
 all: $(BIN)$(MAIN)
 
@@ -44,10 +48,9 @@ lib: $(MLIB)
 #                               Proceso de compilación                                #
 #                                                                                     #
 #######################################################################################
+$(BIN)$(MAIN): $(SRC)main.c $(MLIB) $(HEADERS)
+	$(CC) -O3 -o $@ $< $(INCLUDE) $(LINK)
 
-# Crea el ejecutable
-$(BIN)$(MAIN): $(SRC)$(MAIN) $(MLIB) $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ $<
 
 #######################################################################################
 #                                                                                     #
@@ -62,15 +65,15 @@ $(MLIB): $(FIT) $(LIST) $(MMANAGER)
 
 # Compila los algoritmos de ajuste
 $(FIT): $(SRC)fit.c $(HEADERS)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) -O3 -c -o $@ $< $(DFIT)
 
 # Compila las estructuras y funciones sobre bloques de memoria
 $(LIST): $(SRC)list.c $(HEADERS)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) -O3 -c -o $@ $< $(DFIT)
 
 # Compila las funciones que gestionan la memoria
 $(MMANAGER): $(SRC)mmanager.c $(HEADERS)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) -O3 -c -o $@ $<
 
 
 #######################################################################################
@@ -82,4 +85,3 @@ $(MMANAGER): $(SRC)mmanager.c $(HEADERS)
 .PHONY: clean
 clean:
 	$(RM) $(OBJ)*.o $(BIN)$(MAIN) $(MLIB)
-
