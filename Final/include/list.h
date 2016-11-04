@@ -31,21 +31,22 @@ BLOCK {
 /* Primer bloque de la memoria.
  */
 #define FIRST first
-static BLOCK * first = NULL;
+extern BLOCK * first;
 
 /**
 /* Para el siguiente ajuste se usa un apuntador al último bloque
 /* usado para comenzar la búsqueda a partir de él.
  */
 #ifdef NEXT_FIT
-static BLOCK * last = NULL;
+#define LAST last
+extern BLOCK * last;
 #endif
 
 
 /**
 /* Inicializa el primer bloque de memoria con el tamaño indicado.
  */
-void set_first_block (void *);
+void set_first_block (void *, size_t);
 
 /**
 /* Ajusta el bloque al tamaño indicado y crea un bloque libre
