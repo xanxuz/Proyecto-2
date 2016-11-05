@@ -6,7 +6,9 @@ int main(void) {
 	int * memory;
 	int i;
 	
-	memory = (int *)calloc(100, sizeof(int));
+	printf("Jojójo\n");
+	
+	memory = (int *)cmalloc(100 * sizeof(int));
 	printf("Memory allocated at 0x%X\n", DIR(memory));
 	
 	if (memory != NULL) {
@@ -16,7 +18,7 @@ int main(void) {
 	}
 	
 	print_free_list();
-	free(memory);
+	cfree(memory);
 	print_free_list();
 	
 	return EXIT_SUCCESS;

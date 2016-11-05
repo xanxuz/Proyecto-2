@@ -21,11 +21,10 @@ all: proy2
 #                               Proceso de compilación                                #
 #                                                                                     #
 #######################################################################################
-proy2: main.o custom_malloc.o custom_malloc.h
-	$(CC) $(CFLAGS) -o $@ $^
+proy2: main.c custom_malloc.o
+	$(CC) -O3 -o $@ $^
 
-main.o: main.c
-custom_malloc.o: custom_malloc.c
+custom_malloc.o: custom_malloc.c custom_malloc.h
 
 
 #######################################################################################

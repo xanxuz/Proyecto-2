@@ -3,18 +3,10 @@
 #define CUSTOM_MALLOC_H
 
 #include <stdio.h>  /* Imports printf. */
-#include <stdlib.h> /* Imports the malloc family of functions. */
 #include <string.h> /* Imports memset and memcpy */
+#include <stdlib.h> /* Imports the malloc family of functions. */
 #include <signal.h> /* Imports kill. */
 #include <unistd.h> /* Imports getpid. */
-
-/**
-/* Indefine la familia de funciones malloc.
- */
-#undef malloc
-#undef calloc
-#undef realloc
-#undef free
 
 
 /**
@@ -117,22 +109,22 @@ void merge ();
 /**
  * Implementación personalizada de malloc.
  */
-void * malloc (size_t);
+void * cmalloc (size_t);
 
 /**
  * Implementación personalizada de calloc.
  */
-void * calloc (size_t, size_t);
+void * ccalloc (size_t, size_t);
 
 /**
  * Implementación personalizada de realloc.
  */
-void * realloc (void *, size_t);
+void * crealloc (void *, size_t);
 
 /**
  * Implementación personalizada de free.
  */
-void free (void *);
+void cfree (void *);
 
 
 #endif

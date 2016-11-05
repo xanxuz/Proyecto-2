@@ -10,7 +10,7 @@ static void set_initial_memory () {
 		set_first_block(mem_start, MEM_SIZE - HEAD_SIZE);
 		
 		printf("\n********************************************************************************\n");
-		printf("CUSTOM MALLOC FAMILY INITIALIZATION\n");
+		printf("CUSTOM cmalloc FAMILY INITIALIZATION\n");
 		printf("\tData segment start = 0x%X\n", DIR(mem_start));
 		printf("\tData segment end   = 0x%X\n", DIR(mem_end));
 		printf("\tData segment size  = %ld bytes\n", mem_end - mem_start);
@@ -147,24 +147,11 @@ void trunk (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque al so
 }
 
 /**
-/* Recorre la lista de bloques colapsando en uno sólo aquellos
-/* que estén libres y se encuentren adyacentes.
+/* Implementación personalizada de malloc.
  */
-void merge () {
-	BLOCK *block = FIRST;
-	
-	while (NEXT) {
-		if ((NEXT)->free) {
-			SIZE += (NEXT)->size + HEAD_SIZE;
-			NEXT = (NEXT)->next;
-		}
-		else block = NEXT;
-	}
-}
-
-void * malloc (size_t size) {
+void * cmalloc (size_t size) {
 	set_initial_memory(); /* NO QUITAR. */
-	printf("Calling malloc with size = %lu\n", size);
+	printf("Calling cmalloc with size = %lu\n", size);
 	
 	if (!size) return NULL; 
 	
@@ -175,27 +162,33 @@ void * malloc (size_t size) {
 	return (block + 1);
 }
 
-void * calloc (size_t nmemb, size_t size) {
+/**
+/* Implementación personalizada de calloc.
+ */
+void * ccalloc (size_t nmemb, size_t size) {
 	set_initial_memory(); /* NO QUITAR. */
-	printf("Calling calloc with nmemb = %lu and size = %lu\n", nmemb, size);
+	printf("Calling ccalloc with nmemb = %lu and size = %lu\n", nmemb, size);
 	
 	size *= nmemb;
-	void *ptr = malloc(size);
+	void *ptr = cmalloc(size);
 	memset(ptr, 0, size);
 	return ptr;
 }
 
-void * realloc(void * ptr, size_t size) {
+/**
+/* Implementación personalizada de realloc.
+ */
+void * crealloc(void * ptr, size_t size) {
 	set_initial_memory(); /* NO QUITAR. */
-	printf("Calling realloc with ptr= 0x%X and size = %lu\n", DIR(ptr), size);
+	printf("Calling crealloc with ptr= 0x%X and size = %lu\n", DIR(ptr), size);
 	  
 	if (!size) {
-		free(ptr);
+		cfree(ptr);
 		return NULL;
 	}
   
 	if (!ptr) {
-		if (size > 0) return malloc(size);
+		if (size > 0) return cmalloc(size);
 		return NULL;
 	}
 	
@@ -210,10 +203,10 @@ void * realloc(void * ptr, size_t size) {
 		}
 		else {
 			BLOCK * old = block;
-			free(block);
+			cfree(block);
 			
-			block = malloc(size);
-			if (!block) block = malloc(old->size);
+			block = cmalloc(size);
+			if (!block) block = cmalloc(old->size);
 			
 			memcpy(block, ptr, old->size);
 		}
@@ -222,15 +215,44 @@ void * realloc(void * ptr, size_t size) {
 	return block;
 }
 
-void free(void *ptr) {
+/**
+/* Implementación personalizada de free.
+ */
+void cfree(void *ptr) {
 	set_initial_memory(); /* NO QUITAR. */
 	printf("Calling free with ptr = 0x%X\n", DIR(ptr));
 	
 	if (!ptr) return; 
-	if (ptr < mem_start || ptr >= mem_end) return;
+	if (ptr < mem_start || ptr >= mem_end) KILL;
 	
-	BLOCK *block = (BLOCK *)(ptr) - 1;
-	if (FREE) KILL;
+	BLOCK * target = (BLOCK *)(ptr) - 1;
+	BLOCK * block = FIRST;
+	
+	while (block != target) {
+		if (NEXT) block = NEXT;
+		else {
+			block = NULL;
+			break;
+		}
+	}
+	
+	if (!block || FREE) KILL;
 	FREE = 1;
 	merge();
+}
+
+/**
+/* Recorre la lista de bloques colapsando en uno sólo aquellos
+/* que estén libres y se encuentren adyacentes.
+ */
+void merge () {
+	BLOCK *block = FIRST;
+	
+	while (NEXT) {
+		if ((NEXT)->free) {
+			SIZE += (NEXT)->size + HEAD_SIZE;
+			NEXT = (NEXT)->next;
+		}
+		else block = NEXT;
+	}
 }
