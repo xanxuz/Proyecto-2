@@ -6,9 +6,9 @@
 
 # Banderas
 #FIT = -DFIRST_FIT
-#FIT = -DNEXT_FIT
+FIT = -DNEXT_FIT
 #FIT = -DBEST_FIT 
-FIT = -DWORST_FIT
+#FIT = -DWORST_FIT
 CFLAGS = -O3 $(FIT)
 
 # Objetivo del Makefile
