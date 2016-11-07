@@ -1,8 +1,0 @@
-La implementción está completa, falta hacer muchas pruebas porque debe estar
-lleno de errores, tal vez ni corra.
-
-Le preguntaré al profesor o a los prepas que tanto se pueden modificar los
-archivos que nos mandaron para hacerlo más organizado y así resolver los
-problemas más fácil, porque todo en un solo archivo se empastela demasiado.
-
-Si no ponen muchos peros este será un proyecto muy divertido jaja :D
