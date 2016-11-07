@@ -224,7 +224,7 @@ void * crealloc(void * ptr, size_t size) {
 		block = cmalloc(size);
 		if (!block) block = cmalloc((old - 1)->size);
 
-		memcpy(block, ptr, old->size);
+		memcpy(block, ptr, (old - 1)->size);
 	}
 	
 	return block;
