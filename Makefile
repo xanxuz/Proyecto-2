@@ -1,18 +1,37 @@
-##
-# Solo debe estar descomentada UNA de las siguientes lineas CFLAGS al compilar.
-##
-CFLAGS = -DFIRST_FIT
-#CFLAGS = -DBEST_FIT
-#CFLAGS = -DWORST_FIT
-#CFLAGS = -DNEXT_FIT
+#######################################################################################
+#                                                                                     #
+#                             Proyecto 2 de Sistemas Operativos                       #
+#                                                                                     #
+#######################################################################################
 
+# Banderas
+#FIT = -DFIRST_FIT
+#FIT = -DNEXT_FIT
+#FIT = -DBEST_FIT 
+FIT = -DWORST_FIT
+CFLAGS = -O3 $(FIT)
+
+# Objetivo del Makefile
 .PHONY: all
 all: proy2
 
-proy2: main.o
-	$(CC) -o $@ $<
 
-main.o: main.c custom_malloc.h
+#######################################################################################
+#                                                                                     #
+#                               Proceso de compilación                                #
+#                                                                                     #
+#######################################################################################
+proy2: main.c custom_malloc.o
+	$(CC) -O3 -o $@ $^
+
+custom_malloc.o: custom_malloc.c custom_malloc.h
+
+
+#######################################################################################
+#                                                                                     #
+#                                 Otras opciones                                      #
+#                                                                                     #
+#######################################################################################
 
 .PHONY: clean
 clean:
