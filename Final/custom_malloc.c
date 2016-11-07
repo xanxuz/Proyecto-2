@@ -6,20 +6,35 @@ static void set_initial_memory () {
 		mem_start = sbrk(0); /* Esto retorna la dirección actual del borde del segmento de datos. */
 		sbrk(MEM_SIZE);     /* Esto mueve el borde del segmento de datos en MEM_SIZE bytes. */
 		mem_end = sbrk(0);
-		
+
 		set_first_block(mem_start, MEM_SIZE - HEAD_SIZE);
-		
+
 		printf("\n********************************************************************************\n");
 		printf("CUSTOM cmalloc FAMILY INITIALIZATION\n");
-		printf("\tData segment start = 0x%X\n", DIR(mem_start));
-		printf("\tData segment end   = 0x%X\n", DIR(mem_end));
+		printf("\tData segment start = 0x%08X\n", DIR(mem_start));
+		printf("\tData segment end   = 0x%08X\n", DIR(mem_end));
 		printf("\tData segment size  = %ld bytes\n", mem_end - mem_start);
 		printf("********************************************************************************\n\n");
 	}
 }
 
 void print_free_list () {
-	printf("TODO: Print contet of free blocks\n");
+	BLOCK * block = FIRST;
+	size_t size = 0;
+	int cont = 0;
+	
+	printf("List of free blocks:\n");
+	while (block) {
+		if (FREE) {
+			printf("Adress = 0x%08X\tSize = %9lu\tNext block = 0x%08X\n", DIR(block), SIZE, DIR(NEXT));
+			size += SIZE;
+			 cont++;
+		}
+		
+		block = NEXT;
+	}
+	
+	printf("\tblocks = % 2d\t\tbytes = %lu\n", cont, size);
 	return;
 }
 
@@ -31,10 +46,10 @@ BLOCK * get_free_block (size_t size) {
 	BLOCK * block = FIRST;
 	
 	while (block) {
-		if (FREE) return block
+		if (FREE) return block;
 		block = NEXT;
 	}
-	
+
 	return NULL;
 }
 
@@ -44,18 +59,18 @@ BLOCK * get_free_block (size_t size) {
 #elif defined(NEXT_FIT)
 BLOCK * get_free_block (size_t size) {
 	BLOCK * block = LAST;
-	
+
 	do {
 		if (FREE && SIZE >= size) {
 			LAST = block;
 			return block;
 		}
-		
+
 		block = NEXT;
-		
+
 		if (!block) block = FIRST;
 	} while (block != LAST);
-	
+
 	return NULL;
 }
 
@@ -67,16 +82,16 @@ BLOCK * get_free_block (size_t size) {
 	BLOCK * block = FIRST;
 	BLOCK * ptr = NULL;
 	size_t best = -1;
-	
+
 	while (block) {
 		if (FREE && SIZE >= size && SIZE < best) {
 			best = SIZE;
 			ptr = block;
 		}
-		
+
 		block = NEXT;
 	}
-	
+
 	return ptr;
 }
 
@@ -88,16 +103,16 @@ BLOCK * get_free_block (size_t size) {
 	BLOCK * block = FIRST;
 	BLOCK * ptr = NULL;
 	size_t worst = size;
-	
+
 	while (block) {
 		if (FREE && SIZE > worst) {
 			worst = SIZE;
 			ptr = block;
 		}
-		
+
 		block = NEXT;
 	}
-	
+
 	return ptr;
 }
 
@@ -119,7 +134,7 @@ void set_first_block (void * ptr, size_t size) {
 	FIRST->free = 1;
 	FIRST->size = size;
 	FIRST->next = NULL;
-	
+
 	#ifdef NEXT_FIT
 	last = FIRST;
 	#endif
@@ -135,12 +150,12 @@ void trunk (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque al so
 		if (SIZE - size <= HEAD_SIZE) return;
 		
 		BLOCK * next = NEXT;
-		
-		NEXT = (void *)((char *)block + HEAD_SIZE + size);
+
+		NEXT = (block + 1) + size;
 		(NEXT)->size = SIZE - size - HEAD_SIZE;
 		(NEXT)->next = next;
 		(NEXT)->free = 1;
-		
+
 		SIZE = size;
 		FREE = 0;
 	}
@@ -153,11 +168,11 @@ void * cmalloc (size_t size) {
 	set_initial_memory(); /* NO QUITAR. */
 	printf("Calling cmalloc with size = %lu\n", size);
 	
-	if (!size) return NULL; 
+	if (!size) return NULL;
 	
 	BLOCK * block = get_free_block(size);
 	if (!block) return NULL;
-	
+
 	trunk(block, size);
 	return (block + 1);
 }
@@ -168,7 +183,7 @@ void * cmalloc (size_t size) {
 void * ccalloc (size_t nmemb, size_t size) {
 	set_initial_memory(); /* NO QUITAR. */
 	printf("Calling ccalloc with nmemb = %lu and size = %lu\n", nmemb, size);
-	
+
 	size *= nmemb;
 	void *ptr = cmalloc(size);
 	memset(ptr, 0, size);
@@ -180,36 +195,36 @@ void * ccalloc (size_t nmemb, size_t size) {
  */
 void * crealloc(void * ptr, size_t size) {
 	set_initial_memory(); /* NO QUITAR. */
-	printf("Calling crealloc with ptr= 0x%X and size = %lu\n", DIR(ptr), size);
-	  
+	printf("Calling crealloc with ptr= 0x%08X and size = %lu\n", DIR(ptr), size);
+	
 	if (!size) {
 		cfree(ptr);
 		return NULL;
 	}
-  
+
 	if (!ptr) {
 		if (size > 0) return cmalloc(size);
 		return NULL;
 	}
-	
-	BLOCK * block = (BLOCK *)(ptr - 1);
+
+	BLOCK * block = (BLOCK *)ptr - 1;
 	if (SIZE == size) return ptr;
-	if (SIZE > size) trunk(block, size);
-	else {
-		if ((NEXT)->free && SIZE + (NEXT)->size + HEAD_SIZE >= size) {
-			NEXT->size -= size - SIZE;
-			NEXT = (block + 1) + size;
-			SIZE = size;
-		}
-		else {
-			BLOCK * old = block;
-			cfree(block);
-			
-			block = cmalloc(size);
-			if (!block) block = cmalloc(old->size);
-			
-			memcpy(block, ptr, old->size);
-		}
+	if (SIZE > size) {
+		trunk(block, size);
+		return (block + 1);
+	}
+	if ((NEXT)->free && SIZE + (NEXT)->size + HEAD_SIZE >= size) {
+		NEXT->size -= size - SIZE;
+		NEXT = (block + 1) + size;
+		SIZE = size;
+	} else {
+		BLOCK * old = (block + 1);
+		cfree(old);
+
+		block = cmalloc(size);
+		if (!block) block = cmalloc((old - 1)->size);
+
+		memcpy(block, ptr, old->size);
 	}
 	
 	return block;
@@ -220,14 +235,14 @@ void * crealloc(void * ptr, size_t size) {
  */
 void cfree(void *ptr) {
 	set_initial_memory(); /* NO QUITAR. */
-	printf("Calling free with ptr = 0x%X\n", DIR(ptr));
-	
-	if (!ptr) return; 
+	printf("Calling free with ptr = 0x%08X\n", DIR(ptr));
+
+	if (!ptr) return;
 	if (ptr < mem_start || ptr >= mem_end) KILL;
-	
-	BLOCK * target = (BLOCK *)(ptr) - 1;
+
+	BLOCK * target = (BLOCK *)ptr - 1;
 	BLOCK * block = FIRST;
-	
+
 	while (block != target) {
 		if (NEXT) block = NEXT;
 		else {
@@ -235,7 +250,7 @@ void cfree(void *ptr) {
 			break;
 		}
 	}
-	
+
 	if (!block || FREE) KILL;
 	FREE = 1;
 	merge();
@@ -247,12 +262,13 @@ void cfree(void *ptr) {
  */
 void merge () {
 	BLOCK *block = FIRST;
-	
+
 	while (NEXT) {
-		if ((NEXT)->free) {
+		if (FREE && (NEXT)->free) {
 			SIZE += (NEXT)->size + HEAD_SIZE;
 			NEXT = (NEXT)->next;
 		}
 		else block = NEXT;
 	}
 }
+

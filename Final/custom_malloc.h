@@ -9,6 +9,17 @@
 #include <unistd.h> /* Imports getpid. */
 
 
+
+/**
+/* Macros auxiliares para trabajar con la estrucutura
+/* de bloque de memoria.
+ */
+#define BLOCK struct block
+#define HEAD_SIZE sizeof(BLOCK)
+#define SIZE block->size
+#define FREE block->free
+#define NEXT block->next
+
 /**
 /* Casteo de la dirección a la que apunta un puntero
 /* al tipo correcto para evitar advertencias al usarlo
@@ -27,16 +38,6 @@
 /* o fuera de la lista de bloques de memoria.
  */
 #define KILL kill(getpid(), SIGSEGV)
-
-/**
-/* Macros auxiliares para trabajar con la estrucutura
-/* de bloque de memoria.
- */
-#define BLOCK struct block
-#define HEAD_SIZE sizeof(BLOCK)
-#define SIZE block->size
-#define FREE block->free
-#define NEXT block->next
 
 
 /**
