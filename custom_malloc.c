@@ -46,7 +46,7 @@ BLOCK * get_free_block (size_t size) {
 	BLOCK * block = FIRST;
 	
 	while (block) {
-		if (FREE) return block;
+		if (FREE && SIZE >= size) return block;
 		block = NEXT;
 	}
 
@@ -81,7 +81,7 @@ BLOCK * get_free_block (size_t size) {
 BLOCK * get_free_block (size_t size) {
 	BLOCK * block = FIRST;
 	BLOCK * ptr = NULL;
-	size_t best = -1;
+	size_t best = MEM_SIZE - HEAD_SIZE;
 
 	while (block) {
 		if (FREE && SIZE >= size && SIZE < best) {
@@ -102,7 +102,7 @@ BLOCK * get_free_block (size_t size) {
 BLOCK * get_free_block (size_t size) {
 	BLOCK * block = FIRST;
 	BLOCK * ptr = NULL;
-	size_t worst = size;
+	size_t worst = 0;
 
 	while (block) {
 		if (FREE && SIZE > worst) {
@@ -224,7 +224,7 @@ void * crealloc(void * ptr, size_t size) {
 		block = cmalloc(size);
 		if (!block) block = cmalloc((old - 1)->size);
 
-		memcpy(block, ptr, (old - 1)->size);
+		memcpy(block, ptr, old->size);
 	}
 	
 	return block;
@@ -271,4 +271,3 @@ void merge () {
 		else block = NEXT;
 	}
 }
-
