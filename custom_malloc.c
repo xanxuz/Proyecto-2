@@ -58,11 +58,12 @@ BLOCK * get_free_block (size_t size) {
  */
 #elif defined(NEXT_FIT)
 BLOCK * get_free_block (size_t size) {
+	if (!LAST) LAST = FIRST; 
 	BLOCK * block = LAST;
-
+	
 	do {
 		if (FREE && SIZE >= size) {
-			LAST = block;
+			LAST = NEXT;
 			return block;
 		}
 
