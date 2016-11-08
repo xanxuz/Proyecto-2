@@ -21,21 +21,31 @@ static void set_initial_memory () {
 void print_free_list () {
 	BLOCK * block = FIRST;
 	size_t size = 0;
-	int cont = 0;
+	int i = 0;
 	
-	printf("List of free blocks:\n");
+	printf("Bloques libres:\n");
 	while (block) {
 		if (FREE) {
-			printf("Adress = 0x%08X\tSize = %9lu\tNext block = 0x%08X\n", DIR(block), SIZE, DIR(NEXT));
-			size += SIZE;
-			 cont++;
+			printf("%2d) 0x%08X - 0x%08X\n", i + 1, DIR(block), DIR(NEXT));
+			i++;
 		}
 		
 		block = NEXT;
 	}
 	
-	printf("\tblocks = % 2d\t\tbytes = %lu\n", cont, size);
-	return;
+	
+	block = FIRST;
+	i = 0;
+	
+	printf("Bloques usados:\n");
+	while (block) {
+		if (!FREE)  {
+			printf("%2d) 0x%08X - 0x%08X\n", i + 1, DIR(block), DIR(NEXT));
+			i++;
+		}
+		
+		block = NEXT;
+	}
 }
 
 /**
@@ -63,7 +73,7 @@ BLOCK * get_free_block (size_t size) {
 	
 	do {
 		if (FREE && SIZE >= size) {
-			LAST = NEXT;
+			LAST = block;
 			return block;
 		}
 
@@ -219,7 +229,8 @@ void * crealloc(void * ptr, size_t size) {
 
 		NEXT = (block + 1) + size;
 		(NEXT)->size -= size - SIZE - HEAD_SIZE;
-
+		(NEXT)->free = 1;
+		
 		SIZE = size;
 		
 		return (block + 1);
