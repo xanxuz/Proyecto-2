@@ -85,7 +85,7 @@ BLOCK * get_free_block (size_t size) {
 	size_t best = MEM_SIZE - HEAD_SIZE;
 
 	while (block) {
-		if (FREE && SIZE >= size && SIZE < best) {
+		if (FREE && SIZE >= size && SIZE <= best) {
 			best = SIZE;
 			ptr = block;
 		}
