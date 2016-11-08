@@ -159,6 +159,8 @@ void trunk (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque al so
 
 		SIZE = size;
 		FREE = 0;
+		
+		merge();
 	}
 }
 
@@ -203,10 +205,8 @@ void * crealloc(void * ptr, size_t size) {
 		return NULL;
 	}
 
-	if (!ptr) {
-		if (size > 0) return cmalloc(size);
-		return NULL;
-	}
+	if (!ptr) return cmalloc(size);
+	
 
 	BLOCK * block = (BLOCK *)ptr - 1;
 	if (SIZE == size) return ptr;
@@ -215,19 +215,23 @@ void * crealloc(void * ptr, size_t size) {
 		return (block + 1);
 	}
 	if ((NEXT)->free && SIZE + (NEXT)->size + HEAD_SIZE >= size) {
-		NEXT->size -= size - SIZE;
+		BLOCK * next = NEXT;
+
 		NEXT = (block + 1) + size;
+		(NEXT)->size -= size - SIZE - HEAD_SIZE;
+
 		SIZE = size;
-	} else {
-		BLOCK * old = (block + 1);
-		cfree(old);
-
-		block = cmalloc(size);
-		if (!block) block = cmalloc((old - 1)->size);
-
-		memcpy(block, ptr, (old - 1)->size);
+		
+		return (block + 1);
 	}
 	
+	BLOCK * old = (block + 1);
+	cfree(old);
+
+	block = cmalloc(size);
+	if (!block) block = cmalloc((old - 1)->size);
+
+	memcpy(block, ptr, (old - 1)->size);
 	return block;
 }
 
