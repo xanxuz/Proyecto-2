@@ -26,21 +26,7 @@ void print_free_list () {
 	printf("Bloques libres:\n");
 	while (block) {
 		if (FREE) {
-			printf("%2d) 0x%08X - 0x%08X\n", i + 1, DIR(block), DIR(NEXT));
-			i++;
-		}
-		
-		block = NEXT;
-	}
-	
-	
-	block = FIRST;
-	i = 0;
-	
-	printf("Bloques usados:\n");
-	while (block) {
-		if (!FREE)  {
-			printf("%2d) 0x%08X - 0x%08X\n", i + 1, DIR(block), DIR(NEXT));
+			printf("%2d) Address = 0x%08X\tNext = 0x%08X\tSize = %9lu B\n", i + 1, DIR(block), DIR(NEXT), SIZE);
 			i++;
 		}
 		
