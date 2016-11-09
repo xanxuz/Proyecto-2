@@ -1,3 +1,7 @@
+#if !defined(FIRST_FIT) && !defined(NEXT_FIT) && !defined(BEST_FIT) && !defined(WORST_FIT)
+	#error no se ha definido un algoritmo de ajuste valido
+#endif
+
 #include "custom_malloc.h"
 
 
@@ -37,7 +41,7 @@ void print_free_list () {
 /**
 /* Implementación del algoritmo del primer ajuste.
  */
-#if defined(FIRST_FIT)
+#if defined(FIRST_FIT) && !defined(NEXT_FIT) && !defined(BEST_FIT) && !defined(WORST_FIT)
 BLOCK * get_free_block (size_t size) {
 	BLOCK * block = FIRST;
 	
@@ -52,7 +56,7 @@ BLOCK * get_free_block (size_t size) {
 /**
 /* Implementación del algoritmo del siguiente ajuste.
  */
-#elif defined(NEXT_FIT)
+#elif !defined(FIRST_FIT) && defined(NEXT_FIT) && !defined(BEST_FIT) && !defined(WORST_FIT)
 BLOCK * get_free_block (size_t size) {
 	if (!LAST) LAST = FIRST; 
 	BLOCK * block = LAST;
@@ -74,7 +78,7 @@ BLOCK * get_free_block (size_t size) {
 /**
 /* Implementación del algoritmo del mejor ajuste.
  */
-#elif defined(BEST_FIT)
+#elif !defined(FIRST_FIT) && !defined(NEXT_FIT) && defined(BEST_FIT) && !defined(WORST_FIT)
 BLOCK * get_free_block (size_t size) {
 	BLOCK * block = FIRST;
 	BLOCK * ptr = NULL;
@@ -95,7 +99,7 @@ BLOCK * get_free_block (size_t size) {
 /**
 /* Implementación del algoritmo del peor ajuste.
  */
-#elif defined(WORST_FIT)
+#elif !defined(FIRST_FIT) && !defined(NEXT_FIT) && !defined(BEST_FIT) && defined(WORST_FIT)
 BLOCK * get_free_block (size_t size) {
 	BLOCK * block = FIRST;
 	BLOCK * ptr = NULL;
@@ -118,7 +122,7 @@ BLOCK * get_free_block (size_t size) {
 /* y detiene la compilación.
  */
 #else
-	#error no se ha especificado un algoritmo de ajuste
+	#error se ha definido mas de un ajuste
 #endif
 
 /**
