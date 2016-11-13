@@ -5,12 +5,17 @@
 #include "custom_malloc.h"
 
 
+/**
+/* Inicializa la memoria y el primer bloque con el tamaño libre,
+/* el tamaño libre es el tamaño de la memoria menos el tamaño del
+/* encabezado del bloque, es decir, el tamaño del struct block.
+ */
 static void set_initial_memory () {
 	if(mem_start == NULL && mem_end == NULL) {
 		mem_start = sbrk(0); /* Esto retorna la dirección actual del borde del segmento de datos. */
 		sbrk(MEM_SIZE);     /* Esto mueve el borde del segmento de datos en MEM_SIZE bytes. */
 		mem_end = sbrk(0);
-
+		
 		set_first_block(mem_start, MEM_SIZE - HEAD_SIZE);
 
 		printf("\n********************************************************************************\n");
@@ -22,12 +27,17 @@ static void set_initial_memory () {
 	}
 }
 
+/**
+/* Recorre la lista de bloques e imprime la información del
+/* bloque actual si éste es un bloque libre.
+ */
 void print_free_list () {
 	BLOCK * block = FIRST;
 	size_t size = 0;
 	int i = 0;
 	
 	printf("Bloques libres:\n");
+	
 	while (block) {
 		if (FREE) {
 			printf("%2d) Address = 0x%08X\tNext = 0x%08X\tSize = %9lu B\n", i + 1, DIR(block), DIR(NEXT), SIZE);
@@ -36,10 +46,28 @@ void print_free_list () {
 		
 		block = NEXT;
 	}
+	
+	/**
+	/* Descomentar para imprimir bloques usados
+	 *//*
+	printf("Bloques usados:\n");
+	block = FIRST;
+	while (block) {
+		if (!FREE) {
+			printf("%2d) Address = 0x%08X\tNext = 0x%08X\tSize = %9lu B\n", i + 1, DIR(block), DIR(NEXT), SIZE);
+			i++;
+		}
+		
+		block = NEXT;
+	}
+	 */
 }
 
 /**
 /* Implementación del algoritmo del primer ajuste.
+/* Busca el primer bloque libre con tamaño suficiente desde
+/* el principio.
+/* Si llego al final y no consigo, nada retorno NULL.
  */
 #if defined(FIRST_FIT) && !defined(NEXT_FIT) && !defined(BEST_FIT) && !defined(WORST_FIT)
 BLOCK * get_free_block (size_t size) {
@@ -49,12 +77,18 @@ BLOCK * get_free_block (size_t size) {
 		if (FREE && SIZE >= size) return block;
 		block = NEXT;
 	}
-
+	
 	return NULL;
 }
 
 /**
 /* Implementación del algoritmo del siguiente ajuste.
+/* Busca el primer bloque libre con tamaño suficiente desde el
+/* bloque siguiente al último que se usó.
+/* Guardo el bloque siguiente al que voy a usar y si llego al
+/* último bloque comienzo desde el primero.
+/* Si llego otra vez al bloque donde inicia la búsqueda,
+/* retorno NULL.
  */
 #elif !defined(FIRST_FIT) && defined(NEXT_FIT) && !defined(BEST_FIT) && !defined(WORST_FIT)
 BLOCK * get_free_block (size_t size) {
@@ -63,27 +97,30 @@ BLOCK * get_free_block (size_t size) {
 	
 	do {
 		if (FREE && SIZE >= size) {
-			LAST = block;
+			LAST = NEXT;
 			return block;
 		}
-
+		
 		block = NEXT;
-
 		if (!block) block = FIRST;
 	} while (block != LAST);
-
+	
 	return NULL;
 }
 
 /**
 /* Implementación del algoritmo del mejor ajuste.
+/* Tomo como mejor tamaño el mayor tamaño posible y recorro todos
+/* los bloques buscando el bloque libre que tenga el menor
+/* tamaño suficiente.
+/* Retorno el mejor bloque, si no se consigue será NULL.
  */
 #elif !defined(FIRST_FIT) && !defined(NEXT_FIT) && defined(BEST_FIT) && !defined(WORST_FIT)
 BLOCK * get_free_block (size_t size) {
 	BLOCK * block = FIRST;
 	BLOCK * ptr = NULL;
 	size_t best = MEM_SIZE - HEAD_SIZE;
-
+	
 	while (block) {
 		if (FREE && SIZE >= size && SIZE <= best) {
 			best = SIZE;
@@ -92,19 +129,23 @@ BLOCK * get_free_block (size_t size) {
 
 		block = NEXT;
 	}
-
+	
 	return ptr;
 }
 
 /**
 /* Implementación del algoritmo del peor ajuste.
+/* Tomo como peor tamaño el mayor tamaño solicitado y recorro todos
+/* los bloques buscando el bloque libre que tenga el mayor tamaño.
+/* Actualizo el peor tamaño por cada candidato que consiga y 
+/* retorno el mejor peor, si no se consigue será NULL.
  */
 #elif !defined(FIRST_FIT) && !defined(NEXT_FIT) && !defined(BEST_FIT) && defined(WORST_FIT)
 BLOCK * get_free_block (size_t size) {
 	BLOCK * block = FIRST;
 	BLOCK * ptr = NULL;
-	size_t worst = 0;
-
+	size_t worst = size;
+	
 	while (block) {
 		if (FREE && SIZE > worst) {
 			worst = SIZE;
@@ -113,7 +154,7 @@ BLOCK * get_free_block (size_t size) {
 
 		block = NEXT;
 	}
-
+	
 	return ptr;
 }
 
@@ -128,7 +169,7 @@ BLOCK * get_free_block (size_t size) {
 /**
 /* Inicializa el primer bloque de memoria con el tamaño indicado. Si se
 /* va a usar el siguiente ajuste se inicializa también el puntero al
-/* último bloque usado
+/* último bloque usado.
  */
 void set_first_block (void * ptr, size_t size) {
 	FIRST = ptr;
@@ -146,26 +187,32 @@ void set_first_block (void * ptr, size_t size) {
 /* adyacente al bloque modificado con los bytes sobrantes.
 /* El nuevo tamaño debe ser menor o igual al tamaño actual.
  */
-void trunk (BLOCK *block, size_t size) { /* Ajusta el tamaño de un bloque al solicitado */
-	if (SIZE > size) {
-		if (SIZE - size <= HEAD_SIZE) return;
-		
-		BLOCK * next = NEXT;
-
-		NEXT = (block + 1) + size;
-		(NEXT)->size = SIZE - size - HEAD_SIZE;
-		(NEXT)->next = next;
-		(NEXT)->free = 1;
-
-		SIZE = size;
+void trunk (BLOCK *block, size_t size) {
+	if (SIZE == size) {
 		FREE = 0;
-		
-		merge();
+		return;
 	}
+	
+	
+	BLOCK * next = NEXT;
+	
+	NEXT = (void *)(block + 1) + size;
+	(NEXT)->size = SIZE - size - HEAD_SIZE;
+	(NEXT)->next = next;
+	(NEXT)->free = 1;
+
+	SIZE = size;
+	FREE = 0;
+	
+	merge();
 }
 
 /**
-/* Implementación personalizada de malloc.
+/* Busca un bloque libre segun el algoritmo de ajuste indicado y
+/* trunca el bloque nuevo en el caso que sea posible.
+/* CASOS BORDE:
+/* Si el tamaño es cero retorna NULL.
+/* Si el algoritmo de ajuste no consigue un bloque, retorna NULL.
  */
 void * cmalloc (size_t size) {
 	set_initial_memory(); /* NO QUITAR. */
@@ -175,13 +222,16 @@ void * cmalloc (size_t size) {
 	
 	BLOCK * block = get_free_block(size);
 	if (!block) return NULL;
+	
 
 	trunk(block, size);
 	return (block + 1);
 }
 
 /**
-/* Implementación personalizada de calloc.
+/* Usa cmalloc para hallar el bloque nuevo y lo inicializa con ceros.
+/* CASOS BORDE:
+/* Si cmalloc no consigue un bloque, se retorna NULL.
  */
 void * ccalloc (size_t nmemb, size_t size) {
 	set_initial_memory(); /* NO QUITAR. */
@@ -189,12 +239,27 @@ void * ccalloc (size_t nmemb, size_t size) {
 
 	size *= nmemb;
 	void *ptr = cmalloc(size);
+	if (!ptr) return NULL;
+	
 	memset(ptr, 0, size);
 	return ptr;
 }
 
 /**
-/* Implementación personalizada de realloc.
+/* Si el tamaño nuevo es menor al del bloque actual, se trunca el
+/* bloque.
+/* Si el tamaño es mayor, el bloque adyacente está libre y el tamaño
+/* nuevo es menor que la suma del bloque actual y el adyacente, se
+/* expande el bloque actual y trunca el adyacente.
+/* Si no es ninguno de los casos anteriores, se hace free al bloque
+/* actual, busca un nuevo bloque con el algoritmo de juste indicado y
+/* se copia el contenido del bloque anterior al bloque nuevo.
+/* CASOS BORDE:
+/* Si el tamaño nuevo es igual al bloque actual no se hace nada.
+/* Si el tamaño nuevo es cero, se aplica cfree al bloque indicado.
+/* Si el puntero es NULL, se aplica cmalloc con el tamaño nuevo
+/* y retorna el nuevo bloque.
+/* Si no se consigue un nuevo bloque para realocar, se retorna NULL.
  */
 void * crealloc(void * ptr, size_t size) {
 	set_initial_memory(); /* NO QUITAR. */
@@ -217,7 +282,7 @@ void * crealloc(void * ptr, size_t size) {
 	if ((NEXT)->free && SIZE + (NEXT)->size + HEAD_SIZE >= size) {
 		BLOCK * next = NEXT;
 
-		NEXT = (block + 1) + size;
+		NEXT = (void *)(block + 1) + size;
 		(NEXT)->size -= size - SIZE - HEAD_SIZE;
 		(NEXT)->free = 1;
 		
@@ -227,11 +292,11 @@ void * crealloc(void * ptr, size_t size) {
 	}
 	
 	BLOCK * old = (block + 1);
-	cfree(old);
-
+	cfree(block + 1);
+	
 	block = cmalloc(size);
-	if (!block) block = cmalloc((old - 1)->size);
-
+	if (!block) return NULL;
+	
 	memcpy(block, ptr, (old - 1)->size);
 	return block;
 }
@@ -248,12 +313,25 @@ void cfree(void *ptr) {
 
 	BLOCK * target = (BLOCK *)ptr - 1;
 	BLOCK * block = FIRST;
+	BLOCK * aux = NULL;
 
-	while (block != target) {
-		if (NEXT) block = NEXT;
-		else {
-			block = NULL;
-			break;
+	while (block < target && block != NULL) {
+		aux = block;
+		block = NEXT;
+		
+		if (block > target) {
+			BLOCK * next = block;
+			block = aux;
+			
+			if (FREE) KILL;
+			
+			
+			NEXT = ptr;
+			SIZE = (size_t)(NEXT) - (size_t)(block + 1);
+			
+			block = NEXT;
+			NEXT = next;
+			SIZE = (size_t)(NEXT) - (size_t)(block + 1);
 		}
 	}
 
