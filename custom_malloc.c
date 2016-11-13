@@ -302,7 +302,11 @@ void * crealloc(void * ptr, size_t size) {
 }
 
 /**
-/* Implementación personalizada de free.
+/* Busco el bloque libre al que apunta ptr (si está en medio
+/* de un bloque lo trunco) y marco el bloque como libre.
+/* CASOS BORDE:
+/* Si ptr apunta a una zona fuera del heap se envía SIGSEGV
+/* Si el bloque encontrado ya está libre se envía SIGSEGV
  */
 void cfree(void *ptr) {
 	set_initial_memory(); /* NO QUITAR. */
