@@ -250,7 +250,8 @@ void * ccalloc (size_t nmemb, size_t size) {
 /* bloque.
 /* Si el tamaño es mayor, el bloque adyacente está libre y el tamaño
 /* nuevo es menor que la suma del bloque actual y el adyacente, se
-/* expande el bloque actual y trunca el adyacente.
+/* expande el bloque actual y trunca el adyacente. Pero si es exacto
+/* se compactan ambos bloques (existe un margen de error de HEAD_SIZE)
 /* Si no es ninguno de los casos anteriores, se hace free al bloque
 /* actual, busca un nuevo bloque con el algoritmo de juste indicado y
 /* se copia el contenido del bloque anterior al bloque nuevo.
@@ -280,13 +281,16 @@ void * crealloc(void * ptr, size_t size) {
 		return (block + 1);
 	}
 	if ((NEXT)->free && SIZE + (NEXT)->size + HEAD_SIZE >= size) {
-		BLOCK * next = NEXT;
-
-		NEXT = (void *)(block + 1) + size;
-		(NEXT)->size -= size - SIZE - HEAD_SIZE;
-		(NEXT)->free = 1;
-		
-		SIZE = size;
+		if (SIZE + (NEXT)->size <= size) {
+			NEXT = (NEXT)->next;
+			SIZE = SIZE + (NEXT)->size + HEAD_SIZE;
+		}
+		else {
+			NEXT = (void *)(block + 1) + size;
+			(NEXT)->size -= size - SIZE - HEAD_SIZE;
+			(NEXT)->free = 1;
+			SIZE = size;
+		}
 		
 		return (block + 1);
 	}
