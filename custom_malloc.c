@@ -52,6 +52,7 @@ void print_free_list () {
 	 *//*
 	printf("Bloques usados:\n");
 	block = FIRST;
+	i = 0;
 	while (block) {
 		if (!FREE) {
 			printf("%2d) Address = 0x%08X\tNext = 0x%08X\tSize = %9lu B\n", i + 1, DIR(block), DIR(NEXT), SIZE);
@@ -286,8 +287,11 @@ void * crealloc(void * ptr, size_t size) {
 			SIZE = SIZE + (NEXT)->size + HEAD_SIZE;
 		}
 		else {
+			BLOCK * next = (NEXT)->next;
+			size_t old = (NEXT)->size;
 			NEXT = (void *)(block + 1) + size;
-			(NEXT)->size -= size - SIZE - HEAD_SIZE;
+			(NEXT)->size = SIZE + old - size;
+			(NEXT)->next = next;
 			(NEXT)->free = 1;
 			SIZE = size;
 		}
